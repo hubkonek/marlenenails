@@ -30,7 +30,7 @@ No compartas el archivo JSON ni la clave privada. No se envían al navegador, al
 
 ### Horarios y operación
 
-Edita servicios, duraciones, días y horarios en `src/modules/booking/config.ts`. Por defecto: martes a sábado de 10:00 a 19:00, intervalos de 30 minutos y reservas desde mañana hasta 60 días adelante. Cada servicio debe terminar antes del cierre. Los bloqueos y eventos de día completo del calendario se consultan con `freeBusy`; los eventos marcados como libres no bloquean citas.
+Edita servicios, duraciones, días y horarios en `src/modules/booking/config.ts`. Por defecto: martes a sábado de 4:00 p. m. a 8:00 p. m., citas cada 2 horas (4:00 y 6:00 p. m.) y reservas desde mañana hasta 60 días adelante. Cada servicio debe terminar antes del cierre. Los bloqueos y eventos de día completo del calendario se consultan con `freeBusy`; los eventos marcados como libres no bloquean citas.
 
 Antes de crear una cita se vuelve a consultar disponibilidad. La comprobación y la inserción se serializan dentro de **un proceso** del servidor. Google Calendar no ofrece una inserción condicional atómica: varios procesos/réplicas o cambios manuales simultáneos pueden provocar solapamientos. Usa un único proceso de reservas; si necesitas múltiples réplicas, añade coordinación distribuida antes de habilitarlas. El campo trampa reduce spam básico, pero no sustituye límites de solicitudes en el proveedor de alojamiento.
 

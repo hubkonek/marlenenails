@@ -11,6 +11,10 @@ const messages: Record<BookingError, string> = {
   slot_taken: 'Alguien acaba de reservar ese horario. Elige otro para tu momento.',
   unavailable: 'No pudimos conectar con el calendario. Inténtalo de nuevo en unos momentos.',
 }
+function formatTime12(value: string) {
+  const [hour, minute] = value.split(':').map(Number)
+  return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'a. m.' : 'p. m.'}`
+}
 type SlotsState = {
   key: string
   status: 'loading' | 'ready' | 'error'
@@ -105,7 +109,7 @@ export function BookingForm({ initialService, onClose }: { initialService: strin
       <h2>¡Tu cita está <em>agendada!</em></h2>
       <p>{confirmation.service}</p>
       <p>{new Intl.DateTimeFormat('es-MX', {
-        timeZone: settings.timeZone, dateStyle: 'full', timeStyle: 'short',
+        timeZone: settings.timeZone, dateStyle: 'full', timeStyle: 'short', hour12: true,
       }).format(new Date(confirmation.start))}</p>
       <p>Hora del estudio ({settings.timeZone}). ¡Te esperamos!</p>
       <button className="button button-red" onClick={onClose}>Listo, ¡nos vemos!</button>
@@ -164,7 +168,7 @@ export function BookingForm({ initialService, onClose }: { initialService: strin
             {currentSlots?.status === 'ready' && <div className="booking-slots">
               {currentSlots.values.map(value => <label className="booking-slot" key={value}>
                 <input type="radio" name="time" value={value} checked={time === value} required onChange={() => { setTime(value); setSubmitError(null) }} />
-                <span>{value}</span>
+                <span>{formatTime12(value)}</span>
               </label>)}
             </div>}
           </fieldset>

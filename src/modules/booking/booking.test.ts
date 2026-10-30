@@ -9,7 +9,7 @@ const zone = 'America/Mexico_City'
 const now = new Date('2026-07-20T18:00:00Z')
 const input = {
   name: '  Ana López  ', phone: '+52 (55) 1234-5678', email: '',
-  service: 'Manicura en gel', date: '2026-07-21', time: '10:00', notes: '', website: '',
+  service: 'Manicura en gel', date: '2026-07-21', time: '16:00', notes: '', website: '',
 }
 
 function fixture(busy: Array<{ start: string; end: string }> = []) {
@@ -28,14 +28,11 @@ function fixture(busy: Array<{ start: string; end: string }> = []) {
 }
 
 describe('studio schedule', () => {
-  test('Tuesday–Saturday, 30-minute steps and the last slot fits the service', () => {
+  test('Tuesday–Saturday, 4–8 pm in 2-hour steps and the last slot fits the service', () => {
     const gel = generateSlots('2026-07-21', 'Manicura en gel', zone)
-    assert.equal(gel[0].time, '10:00')
-    assert.equal(gel[1].time, '10:30')
-    assert.equal(gel.at(-1)?.time, '18:00')
-    assert.equal(gel.length, 17)
-    assert.equal(generateSlots('2026-07-25', 'Extensiones Gel X', zone).at(-1)?.time, '17:30')
-    assert.equal(generateSlots('2026-07-21', 'Nail art a tu medida', zone).at(-1)?.time, '17:00')
+    assert.deepEqual(gel.map(slot => slot.time), ['16:00', '18:00'])
+    assert.equal(generateSlots('2026-07-25', 'Extensiones Gel X', zone).at(-1)?.time, '18:00')
+    assert.equal(generateSlots('2026-07-21', 'Nail art a tu medida', zone).at(-1)?.time, '18:00')
     assert.deepEqual(generateSlots('2026-07-26', 'Manicura en gel', zone), [])
     assert.deepEqual(generateSlots('2026-07-27', 'Manicura en gel', zone), [])
   })
@@ -43,11 +40,11 @@ describe('studio schedule', () => {
   test('adjacent busy intervals do not block a slot; partial overlaps do', () => {
     const slots = generateSlots('2026-07-21', 'Manicura en gel', zone)
     const adjacent = [
-      { start: '2026-07-21T15:00:00Z', end: '2026-07-21T16:00:00Z' },
-      { start: '2026-07-21T17:00:00Z', end: '2026-07-21T18:00:00Z' },
+      { start: '2026-07-21T21:00:00Z', end: '2026-07-21T22:00:00Z' },
+      { start: '2026-07-21T23:00:00Z', end: '2026-07-22T00:00:00Z' },
     ]
-    assert.equal(filterAvailableSlots(slots, adjacent)[0].time, '10:00')
-    assert.ok(!filterAvailableSlots(slots, [{ start: '2026-07-21T16:30:00Z', end: '2026-07-21T16:45:00Z' }]).some(s => s.time === '10:00'))
+    assert.equal(filterAvailableSlots(slots, adjacent)[0].time, '16:00')
+    assert.ok(!filterAvailableSlots(slots, [{ start: '2026-07-21T22:30:00Z', end: '2026-07-21T22:45:00Z' }]).some(s => s.time === '16:00'))
   })
 
   test('resolves timezone offsets across DST and rejects nonexistent local times', () => {
@@ -100,29 +97,29 @@ describe('booking validation', () => {
 
 describe('booking service with mocked Google client', () => {
   test('occupied slot returns slot_taken without inserting', async () => {
-    const f = fixture([{ start: '2026-07-21T16:30:00Z', end: '2026-07-21T17:00:00Z' }])
+    const f = fixture([{ start: '2026-07-21T22:30:00Z', end: '2026-07-21T23:00:00Z' }])
     assert.deepEqual(await f.service.createBooking(input), { ok: false, error: 'slot_taken' })
     assert.equal(f.inserted.length, 0)
   })
   test('free slot inserts exact start/end/timeZone, summary and contact details', async () => {
     const f = fixture()
     assert.deepEqual(await f.service.createBooking({ ...input, email: 'ana@example.com', notes: 'Rojo' }), {
-      ok: true, data: { start: '2026-07-21T16:00:00.000Z', service: input.service },
+      ok: true, data: { start: '2026-07-21T22:00:00.000Z', service: input.service },
     })
     assert.deepEqual(f.inserted[0], {
       summary: 'Manicura en gel — Ana López',
       description: 'Teléfono: +52 (55) 1234-5678\nCorreo: ana@example.com\nNotas: Rojo',
-      start: { dateTime: '2026-07-21T16:00:00.000Z', timeZone: zone },
-      end: { dateTime: '2026-07-21T17:00:00.000Z', timeZone: zone },
+      start: { dateTime: '2026-07-21T22:00:00.000Z', timeZone: zone },
+      end: { dateTime: '2026-07-21T23:00:00.000Z', timeZone: zone },
     })
     assert.deepEqual(f.queries, [{ start: '2026-07-21T06:00:00.000Z', end: '2026-07-22T06:00:00.000Z' }])
   })
   test('availability filters busy times and queries the full local day', async () => {
-    const f = fixture([{ start: '2026-07-21T16:00:00Z', end: '2026-07-21T17:00:00Z' }])
+    const f = fixture([{ start: '2026-07-21T22:00:00Z', end: '2026-07-21T23:00:00Z' }])
     const result = await f.service.getAvailableSlots({ service: input.service, date: input.date })
     assert.ok(result.ok)
-    assert.ok(!result.data.slots.includes('10:00'))
-    assert.equal(result.data.slots[0], '11:00')
+    assert.ok(!result.data.slots.includes('16:00'))
+    assert.equal(result.data.slots[0], '18:00')
     assert.equal(f.inserted.length, 0)
   })
   test('Google errors become generic errors and sanitized server logs', async () => {
