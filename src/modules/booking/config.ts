@@ -6,6 +6,7 @@ export const bookingConfig = {
     { name: 'Nail art a tu medida', duration: 120 },
   ],
   openingHours: {
+    1: { open: '16:00', close: '22:00' },
     2: { open: '16:00', close: '22:00' },
     3: { open: '16:00', close: '22:00' },
     4: { open: '16:00', close: '22:00' },

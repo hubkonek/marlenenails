@@ -28,13 +28,13 @@ function fixture(busy: Array<{ start: string; end: string }> = []) {
 }
 
 describe('studio schedule', () => {
-  test('Tuesday–Saturday, 4–10 pm in 2-hour steps and the last slot fits the service', () => {
+  test('Monday–Saturday, 4–10 pm in 2-hour steps and the last slot fits the service', () => {
     const gel = generateSlots('2026-07-21', 'Manicura en gel', zone)
     assert.deepEqual(gel.map(slot => slot.time), ['16:00', '18:00', '20:00'])
     assert.equal(generateSlots('2026-07-25', 'Extensiones Gel X', zone).at(-1)?.time, '20:00')
     assert.equal(generateSlots('2026-07-21', 'Nail art a tu medida', zone).at(-1)?.time, '20:00')
     assert.deepEqual(generateSlots('2026-07-26', 'Manicura en gel', zone), [])
-    assert.deepEqual(generateSlots('2026-07-27', 'Manicura en gel', zone), [])
+    assert.deepEqual(generateSlots('2026-07-27', 'Manicura en gel', zone).map(slot => slot.time), ['16:00', '18:00', '20:00'])
   })
 
   test('adjacent busy intervals do not block a slot; partial overlaps do', () => {
